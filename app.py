@@ -1,14 +1,24 @@
-
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from db import connect_to_database, disconnect_from_database, database
 from schema import rca_results, RCAResult
 import logging
 
 # Set up logger
 logger = logging.getLogger("uvicorn.error")
- 
+
 # FastAPI setup
+
 app = FastAPI(title="RCA Service")
+
+# CORS settings to allow all domains
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 # Startup event to initialize database connection
@@ -17,7 +27,7 @@ async def startup():
     try:
         await connect_to_database()
         logger.info("Database connected successfully.")
-        
+
     except Exception as e:
         logger.error(f"Error connecting to the database: {e}")
 
