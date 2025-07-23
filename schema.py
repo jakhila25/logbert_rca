@@ -10,7 +10,7 @@ import sqlalchemy
 from sqlalchemy import (
     Table, Column, String, Integer, DateTime, ForeignKey, Text, func, JSON
 )
-from sql import metadata
+from db import metadata
 
 
 rca_results = Table(

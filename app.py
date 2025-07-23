@@ -1,20 +1,34 @@
 
 from fastapi import FastAPI, HTTPException
-from sql import database
+from db import connect_to_database, disconnect_from_database, database
 from schema import rca_results, RCAResult
+import logging
 
+# Set up logger
+logger = logging.getLogger("uvicorn.error")
+ 
 # FastAPI setup
 app = FastAPI(title="RCA Service")
 
 
-
+# Startup event to initialize database connection
 @app.on_event("startup")
 async def startup():
-    await database.connect()
+    try:
+        await connect_to_database()
+        logger.info("Database connected successfully.")
+        
+    except Exception as e:
+        logger.error(f"Error connecting to the database: {e}")
 
+# Shutdown event to close database connection
 @app.on_event("shutdown")
 async def shutdown():
-    await database.disconnect()
+    try:
+        await disconnect_from_database()
+        logger.info("Database disconnected successfully.")
+    except Exception as e:
+        logger.error(f"Error disconnecting from the database: {e}")
 
 @app.get("/health")
 def health():
