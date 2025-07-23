@@ -1,3 +1,4 @@
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from db import connect_to_database, disconnect_from_database, database
@@ -6,7 +7,7 @@ import logging
 
 # Set up logger
 logger = logging.getLogger("uvicorn.error")
-
+ 
 # FastAPI setup
 
 app = FastAPI(title="RCA Service")
@@ -27,7 +28,7 @@ async def startup():
     try:
         await connect_to_database()
         logger.info("Database connected successfully.")
-
+        
     except Exception as e:
         logger.error(f"Error connecting to the database: {e}")
 
@@ -44,14 +45,22 @@ async def shutdown():
 def health():
     return {"status": "ok"}
 
-@app.get("/rca/latest", response_model=RCAResult)
+@app.get("/rca/latest", response_model=list[RCAResult])
 async def get_latest_rca():
-    query = rca_results.select().order_by(rca_results.c.logdate.desc()).limit(1)
-    row = await database.fetch_one(query)
-    if not row:
+    query = rca_results.select().order_by(rca_results.c.logdate.desc())
+    rows = await database.fetch_all(query)
+    if not rows:
+        logger.info("No RCA results found.")
         raise HTTPException(status_code=404, detail="No RCA results found.")
-    # Patch: ensure rootcause is a string for Pydantic validation
-    if "rootcause" in row and row["rootcause"] is None:
+    logger.info(f"Returning {len(rows)} RCA result(s)")
+    results = []
+    for row in rows:
         row = dict(row)
-        row["rootcause"] = ""
-    return row
+        # Ensure events is a list of dicts, not strings
+        if "events" in row and isinstance(row["events"], list):
+            if row["events"] and isinstance(row["events"][0], str):
+                row["events"] = [{"message": e} for e in row["events"]]
+        results.append(row)
+    return results
+
+
