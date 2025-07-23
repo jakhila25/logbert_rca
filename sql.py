@@ -1,13 +1,8 @@
- 
-
-
 import os
 import logging
 from dotenv import load_dotenv
 import databases
 import sqlalchemy
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker
 
 # Load environment variables from .env file
 load_dotenv()
@@ -29,8 +24,7 @@ DATABASE_URL = os.getenv("DATABASE_URI")
 
 if not DATABASE_URL:
     logger.error("DATABASE_URI not found in environment variables.")
-    raise ValueError(
-        "DATABASE_URI not found in environment variables. Ensure it is set in the .env file.")
+    raise ValueError("DATABASE_URI not found in environment variables. Ensure it is set in the .env file.")
 
 # Initialize the database connection and metadata
 try:
@@ -41,17 +35,7 @@ except Exception as e:
     logger.error("Failed to initialize database connection: %s", e)
     raise
 
-# Create async SQLAlchemy engine and session for PostgreSQL
-ASYNC_DATABASE_URL = DATABASE_URL.replace(
-    'postgresql://', 'postgresql+asyncpg://')
-engine = create_async_engine(ASYNC_DATABASE_URL, echo=False, future=True)
-async_session = sessionmaker(
-    engine, expire_on_commit=False, class_=AsyncSession
-)
-
 # Helper function to initialize database
-
-
 async def connect_to_database():
     """
     Connects to the database when the application starts.
@@ -63,9 +47,7 @@ async def connect_to_database():
         logger.error("Error connecting to the database: %s", e)
         raise
 
-
 # Helper function to disconnect database
-
 async def disconnect_from_database():
     """
     Disconnects from the database when the application shuts down.
@@ -76,21 +58,3 @@ async def disconnect_from_database():
     except Exception as e:
         logger.error("Error disconnecting from the database: %s", e)
         raise
-
-
-# Async function to fetch RCA results using ASYNC_DATABASE_URL
-import asyncpg
-from typing import List, Dict
-
-async def get_rca_results() -> List[Dict]:
-    """
-    Fetch all RCA results from the rca_results table as a list of dicts (async).
-    Uses ASYNC_DATABASE_URL for connection.
-    """
-    conn = await asyncpg.connect(ASYNC_DATABASE_URL)
-    try:
-        rows = await conn.fetch("SELECT * FROM rca_results ORDER BY logdate DESC LIMIT 100;")
-        # Convert asyncpg Record to dict
-        return [dict(row) for row in rows]
-    finally:
-        await conn.close()
