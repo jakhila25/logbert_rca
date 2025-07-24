@@ -90,7 +90,7 @@ jobs:
             docker rm lobert_rca_agent-container || true
           
             echo "Running new container..."
-            docker run -d --name lobert_rca_agent-container -p 8000:8000 ${{env.ECR_IMAGE}}
+            docker run -d --name lobert_rca_agent-container -p 8000:8000 -v /etc/ssl/cert.pem:/certs/cert.pem  -v /etc/ssl/key.pem:/certs/key.pem ${{env.ECR_IMAGE}}
 
             echo "Deployment complete. Active containers:"
             docker ps -a
